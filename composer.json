@@ -1,0 +1,59 @@
+{
+    "name": "markocupic/sac-pilatus-restic-backup",
+    "description": "SAC Pilatus Restic Backup",
+    "keywords": [
+        "contao",
+        "bundle",
+        "Restic file backup"
+    ],
+    "type": "contao-bundle",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Marko Cupic",
+            "email": "m.cupic@gmx.ch",
+            "homepage": "https://github.com/markocupic",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/markocupic/sac-pilatus-restic-backup/issues",
+        "source": "https://github.com/markocupic/sac-pilatus-restic-backup"
+    },
+    "require": {
+        "php": "^8.2",
+        "ext-zip": "*",
+        "ext-bz2": "*",
+        "symfony/filesystem": "^6.4 || ^7.0",
+        "contao/core-bundle": "^5.3",
+        "terminal42/php-restic": "^0.2"
+    },
+    "require-dev": {
+        "contao/easy-coding-standard": "^6.13",
+        "contao/manager-plugin": "^2.12",
+        "contao/test-case": "^5.3",
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Markocupic\\SacPilatusResticBackup\\": "src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "contao-components/installer": false,
+            "contao/manager-plugin": false,
+            "contao-community-alliance/composer-plugin": true,
+            "php-http/discovery": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "extra": {
+        "contao-manager-plugin": "Markocupic\\SacPilatusResticBackup\\ContaoManager\\Plugin"
+    },
+    "scripts": {
+        "unit-tests": "@php tools/phpunit/vendor/bin/phpunit -c tools/phpunit/phpunit.xml.dist",
+        "cs-fixer": "@php tools/ecs/vendor/bin/ecs check config/ contao/ src/ templates/ tests/ --config tools/ecs/config/default.php --fix --ansi"
+    },
+    "version": "1.0"
+}
