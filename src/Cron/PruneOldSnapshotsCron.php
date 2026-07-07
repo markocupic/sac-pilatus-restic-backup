@@ -20,27 +20,25 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCronJob('daily')]
-class PruneOldSnapshotsCron
+readonly class PruneOldSnapshotsCron
 {
     public function __construct(
         #[Autowire(service: 'markocupic_sac_pilatus_restic_backup.factory.default')]
-        private readonly ResticFactory $resticFactory,
-        #[Autowire(param: 'kernel.project_dir')]
-        private readonly string $projectDir,
-        private readonly LoggerInterface|null $logger = null,
+        private ResticFactory $resticFactory,
+        private LoggerInterface|null $logger = null,
     ) {
     }
 
     public function __invoke(string $scope): void
     {
-        // Prune ist rechenintensiv -> nur im CLI-Scope (Server-Cron), nie im Web-Request.
+        // Pruning is resource-intensive -> only in the CLI scope (server cron), never in a web request.
         if (Cron::SCOPE_CLI !== $scope) {
             return;
         }
 
         $restic = $this->resticFactory->create();
 
-        // Alles behalten, was jünger als 3 Monate ist; Älteres wird entfernt.
+        // Keep everything younger than 3 months old; older snapshots are removed.
         $action = new ForgetSnapshotsWithin('3m');
 
         $restic->runAction($action);
@@ -49,12 +47,12 @@ class PruneOldSnapshotsCron
 
         if (!$result->wasSuccessful()) {
             $this->logger?->error(
-                '[Restic] Aufräumen alter Snapshots fehlgeschlagen: '.$result->getOutput(),
+                '[Restic] Pruning old snapshots failed: '.$result->getOutput(),
             );
 
             return;
         }
 
-        $this->logger?->info('[Restic] Snapshots älter als 3 Monate entfernt und Repository bereinigt.');
+        $this->logger?->info('[Restic] Removed snapshots older than 3 months and cleaned up the repository.');
     }
 }

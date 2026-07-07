@@ -2,19 +2,19 @@
 
 # SAC Pilatus Restic Backup
 
-Ein Contao-Bundle, das [`terminal42/php-restic`](https://github.com/terminal42/php-restic) kapselt und
-Backups mit [restic](https://restic.net/) als Console-Commands und Contao-Cronjobs bereitstellt.
+A Contao bundle that wraps [`terminal42/php-restic`](https://github.com/terminal42/php-restic) and
+provides backups with [restic](https://restic.net/) as console commands and Contao cron jobs.
 
-Die restic-Binary wird beim ersten Lauf automatisch heruntergeladen (SHA256-verifiziert) – es muss kein
-systemweites restic installiert werden.
+The restic binary is downloaded automatically on the first run (SHA256-verified) – no system-wide restic
+installation is required.
 
-> Basiert auf `terminal42/php-restic` **v0.2.x** (restic 0.19.1). Das Paket gibt keine BC-Garantien.
+> Based on `terminal42/php-restic` **v0.2.x** (restic 0.19.1). The package makes no BC promises.
 
-## Voraussetzungen
+## Requirements
 
-- PHP ≥ 8.2 mit den Extensions `ext-zip` und `ext-bz2`
+- PHP ≥ 8.2 with the `ext-zip` and `ext-bz2` extensions
 - Contao ≥ 5.3
-- Schreibrechte im `base_directory` und Internetzugriff auf `github.com/restic/restic/releases` beim ersten Lauf
+- Write permissions in the `base_directory` and internet access to `github.com/restic/restic/releases` on the first run
 
 ## Installation
 
@@ -22,81 +22,81 @@ systemweites restic installiert werden.
 composer require markocupic/sac-pilatus-restic-backup
 ```
 
-Das Bundle registriert sich über den Contao Manager Plugin automatisch.
+The bundle registers itself automatically via the Contao Manager plugin.
 
-## Konfiguration
+## Configuration
 
-Konfiguriert wird unter dem Schlüssel `markocupic_sac_pilatus_restic_backup`. Jeder Schlüssel darunter ist
-eine **benannte Backup-Konfiguration** (z. B. `default`, `database`, `media`). Eine Konfiguration mit dem
-Namen `default` ist **Pflicht**.
+Configuration is done under the key `markocupic_sac_pilatus_restic_backup`. Each key below it is a
+**named backup configuration** (e.g. `default`, `database`, `media`). A configuration named `default` is
+**required**.
 
 ```yaml
 # config/config.yaml
 markocupic_sac_pilatus_restic_backup:
 
-  default:
-    base_directory: '%kernel.project_dir%'          # Pflicht: Projekt-Wurzelverzeichnis (absolut)
-    items_to_backup: # zu sichernde Pfade, relativ zum base_directory
-      - 'files/fileadmin'
-      - 'files/sektion'
-    repository: '%kernel.project_dir%/var/backups/restic'   # Pflicht: absoluter Pfad oder s3-DSN
-    password: '%env(RESTIC_PASSWORD)%'               # Pflicht
-    restic_directory: 'var/restic'                   # optional: Ort für Binary/Cache (relativ)
-    excludes: # optional: relativ zum base_directory
-      - 'var/cache'
-      - 'var/logs'
-    env: [ ]                                          # optional: z. B. AWS-Keys für S3
+    default:
+        base_directory: '%kernel.project_dir%'          # required: project root directory (absolute)
+        items_to_backup:                                 # paths to back up, relative to base_directory
+            - 'files/fileadmin'
+            - 'files/sektion'
+        repository: '%kernel.project_dir%/var/backups/restic'   # required: absolute path or s3 DSN
+        password: '%env(RESTIC_PASSWORD)%'               # required
+        restic_directory: 'var/restic'                   # optional: location for binary/cache (relative)
+        excludes:                                        # optional: relative to base_directory
+            - 'var/cache'
+            - 'var/logs'
+        env: []                                          # optional: e.g., AWS keys for S3
 
-  # Weitere Typen sind möglich – einfach als zusätzlichen Schlüssel anlegen:
-  # database:
-  #     base_directory: '%kernel.project_dir%'
-  #     items_to_backup: ['var/db_dump']
-  #     repository: '%kernel.project_dir%/var/backups/restic-db'
-  #     password: '%env(RESTIC_PASSWORD_DB)%'
+    # Additional types are possible – just add another key:
+    # database:
+    #     base_directory: '%kernel.project_dir%'
+    #     items_to_backup: ['var/db_dump']
+    #     repository: '%kernel.project_dir%/var/backups/restic-db'
+    #     password: '%env(RESTIC_PASSWORD_DB)%'
 ```
 
 ```dotenv
 # .env.local
-RESTIC_PASSWORD=ein-sehr-geheimes-passwort
+RESTIC_PASSWORD=a-very-secret-password
 ```
 
-Felder je Konfiguration:
+Fields per configuration:
 
-| Option             | Pflicht | Default      | Beschreibung                                                                    |
-|--------------------|:-------:|--------------|---------------------------------------------------------------------------------|
-| `base_directory`   | **ja**  | –            | Projekt-Wurzelverzeichnis. Basis für `restic_directory`, CWD und Auto-Excludes. |
-| `items_to_backup`  |  nein   | `[]`         | Zu sichernde Pfade, relativ zum `base_directory`.                               |
-| `repository`       | **ja**  | –            | Restic-DSN: absoluter lokaler Pfad **oder** `s3:…`.                             |
-| `password`         | **ja**  | –            | Passwort des restic-Repositories.                                               |
-| `restic_directory` |  nein   | `var/restic` | Unterordner für Binary/Cache, relativ zum `base_directory`.                     |
-| `excludes`         |  nein   | `[]`         | Ausschlüsse, relativ zum `base_directory`.                                      |
-| `env`              |  nein   | `[]`         | Zusätzliche restic-Env-Variablen (z. B. `AWS_ACCESS_KEY_ID` für S3).            |
+| Option             | Required | Default      | Description                                                                 |
+|--------------------|:--------:|--------------|-----------------------------------------------------------------------------|
+| `base_directory`   | **yes**  | –            | Project root directory. Base for `restic_directory`, CWD and auto excludes. |
+| `items_to_backup`  |    no    | `[]`         | Paths to back up, relative to `base_directory`.                             |
+| `repository`       | **yes**  | –            | Restic DSN: absolute local path **or** `s3:…`.                              |
+| `password`         | **yes**  | –            | Password of the restic repository.                                          |
+| `restic_directory` |    no    | `var/restic` | Subdirectory for binary/cache, relative to `base_directory`.                |
+| `excludes`         |    no    | `[]`         | Excludes, relative to `base_directory`.                                     |
+| `env`              |    no    | `[]`         | Additional restic env variables (e.g. `AWS_ACCESS_KEY_ID` for S3).          |
 
-Hinweise: Lokale Repositories brauchen einen **absoluten** Pfad. Für S3 müssen `AWS_ACCESS_KEY_ID` und
-`AWS_SECRET_ACCESS_KEY` im `env`-Array stehen. Das `restic_directory` wird automatisch aus Backups
-ausgeschlossen. Wähle als Repository idealerweise einen anderen Datenträger als das Projekt.
+Notes: Local repositories require an **absolute** path. For S3, `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY` must be set in the `env` array. The `restic_directory` is excluded from backups
+automatically. Ideally choose a different storage device for the repository than the project itself.
 
-Aus jeder Konfiguration registriert das Bundle einen eigenen Factory-Service unter der ID
-`markocupic_sac_pilatus_restic_backup.factory.<name>` (z. B. `markocupic_sac_pilatus_restic_backup.factory.default`).
+For each configuration the bundle registers a dedicated factory service with the ID
+`markocupic_sac_pilatus_restic_backup.factory.<name>` (e.g. `markocupic_sac_pilatus_restic_backup.factory.default`).
 
 ## Commands
 
-Alle Commands nutzen standardmässig die `default`-Konfiguration.
+All commands use the `default` configuration by default.
 
 ### `sac-pilatus-restic:backup`
 
-Sichert die in der Konfiguration definierten `items_to_backup`. Prüft vorab, ob die Pfade existieren.
+Backs up the `items_to_backup` defined in the configuration. Checks in advance whether the paths exist.
 
 ```bash
-php bin/console sac-pilatus-restic:backup            # Backup erstellen
-php bin/console sac-pilatus-restic:backup --dry-run  # nur simulieren
-php bin/console sac-pilatus-restic:backup --no-scan  # Scan-Phase überspringen
-php bin/console sac-pilatus-restic:backup -v         # verbose: zeigt jede verarbeitete Datei
+php bin/console sac-pilatus-restic:backup            # create a backup
+php bin/console sac-pilatus-restic:backup --dry-run  # only simulate
+php bin/console sac-pilatus-restic:backup --no-scan  # skip the scan phase
+php bin/console sac-pilatus-restic:backup -v         # verbose: shows every processed file
 ```
 
 ### `sac-pilatus-restic:list`
 
-Listet alle Snapshots auf – **neueste zuerst** – als Tabelle mit ID und Zeitpunkt.
+Lists all snapshots – **newest first** – as a table with ID and time.
 
 ```bash
 php bin/console sac-pilatus-restic:list
@@ -104,48 +104,47 @@ php bin/console sac-pilatus-restic:list
 
 ### `sac-pilatus-restic:restore`
 
-Stellt einen Snapshot **in ein neues Verzeichnis** wieder her. Interaktiv: die vorhandenen Snapshots
-werden – neueste zuerst, mit Datum/Uhrzeit – zur Auswahl angeboten (inkl. `latest`).
+Restores a snapshot **into a new directory**. Interactive: the existing snapshots are offered for
+selection – newest first, with date/time (including `latest`).
 
 ```bash
-php bin/console sac-pilatus-restic:restore                                   # vollständig interaktiv
-php bin/console sac-pilatus-restic:restore var/restore/2026-07-06            # Ziel vorgeben
-php bin/console sac-pilatus-restic:restore var/restore/2026-07-06 latest     # alles vorgeben
+php bin/console sac-pilatus-restic:restore                                   # fully interactive
+php bin/console sac-pilatus-restic:restore var/restore/2026-07-06            # provide the target
+php bin/console sac-pilatus-restic:restore var/restore/2026-07-06 latest     # provide everything
 ```
 
-Argumente: `target` (Zielverzeichnis als relativer Pfad ab Projekt-Root), `snapshot` (ID oder `latest`).
-Option `--dry-run`. Der Zielpfad muss innerhalb des Projekt-Roots liegen, und **existiert das Ziel
-bereits, bricht der Command ab** – es wird nie etwas überschrieben.
+Arguments: `target` (target directory as a relative path from the project root), `snapshot` (ID or
+`latest`). Option `--dry-run`. The target path must be inside the project root, and **if the target
+already exists, the command aborts** – nothing is ever overwritten.
 
-## Cronjobs
+## Cron jobs
 
-Beide Cronjobs laufen ausschliesslich im **CLI-Scope** (rechenintensive Vorgänge blockieren so keinen
-Besucher-Request) und nutzen die `default`-Konfiguration. Ergebnisse werden in den Contao-Logger
-geschrieben.
+Both cron jobs run exclusively in the **CLI scope** (so resource-intensive operations never block a
+visitor request) and use the `default` configuration. Results are written to the Contao logger.
 
-- **`CreateBackupCron`** (`#[AsCronJob('hourly')]`) – erstellt stündlich ein Backup der konfigurierten
+- **`CreateBackupCron`** (`#[AsCronJob('hourly')]`) – creates an hourly backup of the configured
   `items_to_backup`.
-- **`PruneOldSnapshotsCron`** (`#[AsCronJob('daily')]`) – entfernt täglich alle Snapshots, die älter als
-  **3 Monate** sind, und bereinigt das Repository (`restic forget --keep-within 3m --prune`). Nutzt dazu
-  die eigene Action `ForgetSnapshotsWithin`.
+- **`PruneOldSnapshotsCron`** (`#[AsCronJob('daily')]`) – removes all snapshots older than **3 months**
+  every day and cleans up the repository (`restic forget --keep-within 3m --prune`). It uses the custom
+  action `ForgetSnapshotsWithin`.
 
-Damit CLI-Cronjobs laufen, muss ein Server-Cron den Contao-Cron anstossen:
+For CLI cron jobs to run, a server cron must trigger the Contao cron:
 
 ```cron
-* * * * * cd /pfad/zum/projekt && php vendor/bin/contao-console contao:cron
+* * * * * cd /path/to/project && php vendor/bin/contao-console contao:cron
 ```
 
-Einen einzelnen Job zum Testen erzwingen (ignoriert das Intervall):
+Force a single job for testing (ignores the interval):
 
 ```bash
 vendor/bin/contao-console contao:cron --force "Markocupic\SacPilatusResticBackup\Cron\CreateBackupCron"
 vendor/bin/contao-console contao:cron --force "Markocupic\SacPilatusResticBackup\Cron\PruneOldSnapshotsCron"
 ```
 
-## Erweitern
+## Extending
 
-Eine konfigurierte `Restic`-Instanz bekommst du über die passende `ResticFactory`. Da pro Konfiguration ein
-eigener Service existiert, wird er über die Service-ID injiziert:
+You get a configured `Restic` instance from the matching `ResticFactory`. Since there is one service per
+configuration, it is injected via the service ID:
 
 ```php
 use Markocupic\SacPilatusResticBackup\Backup\ResticFactory;
@@ -158,18 +157,17 @@ public function __construct(
 
 // …
 $restic = $this->resticFactory->create();
-$items  = $this->resticFactory->getItemsToBackup(); // zu sichernde Pfade aus der Config
+$items  = $this->resticFactory->getItemsToBackup(); // paths to back up from the config
 ```
 
-Für einen anderen Backup-Typ tauschst du die Service-ID (`markocupic_sac_pilatus_restic_backup.factory.database` usw.).
+For a different backup type, swap the service ID (`markocupic_sac_pilatus_restic_backup.factory.database`, etc.).
 
-## Bekannte Einschränkung
+## Known limitation
 
-`restic restore --json` liefert einen NDJSON-Stream; die Getter `getNumberOfFilesRestored()` /
-`getTotalBytes()` von `RestoreBackupResult` erwarten aber ein einzelnes JSON-Objekt und würden sonst
-einen `TypeError` auslösen. Der Restore-Command umgeht das, indem er die letzte `summary`-Zeile selbst
-parst.
+`restic restore --json` returns an NDJSON stream; however, the getters `getNumberOfFilesRestored()` /
+`getTotalBytes()` of `RestoreBackupResult` expect a single JSON object and would otherwise throw a
+`TypeError`. The restore command works around this by parsing the last `summary` line itself.
 
-## Lizenz
+## License
 
 GPL-3.0-or-later — (c) Marko Cupic · https://github.com/markocupic/sac-pilatus-restic-backup

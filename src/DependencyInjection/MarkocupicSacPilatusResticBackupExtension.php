@@ -45,10 +45,9 @@ class MarkocupicSacPilatusResticBackupExtension extends Extension
             throw new \Exception(Configuration::ROOT_KEY.'.default must be set in your configuration.');
         }
 
-        // $config ist jetzt ['default' => [...], 'files' => [...], …]
         foreach ($config as $name => $backup) {
-            // Factory-Service
             $factory = new Definition(ResticFactory::class);
+
             $factory->setArguments([
                 '$baseDirectory' => $backup['base_directory'],
                 '$itemsToBackup' => $backup['items_to_backup'],

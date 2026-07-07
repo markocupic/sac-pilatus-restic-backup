@@ -27,12 +27,12 @@ use Terminal42\Restic\Action\CreateBackup;
 
 /**
  * php bin/console sac-pilatus-restic:backup
- * php bin/console sac-pilatus-restic:backup --dry-run # nur simulieren
- * php bin/console sac-pilatus-restic:backup -v # verbose: schaltet eine ausführlichere Ausgabe frei, bei der du jede einzelne Datei siehst, die restic gerade verarbeitet — statt nur des Fortschrittsbalkens.
+ * php bin/console sac-pilatus-restic:backup --dry-run # only simulate
+ * php bin/console sac-pilatus-restic:backup -v # verbose: enables more detailed output showing every single file restic is processing — instead of just the progress bar.
  */
 #[AsCommand(
     name: 'sac-pilatus-restic:backup',
-    description: 'Erstellt ein Restic-Backup des angegebenen Verzeichnisses.',
+    description: 'Creates a restic backup of the configured directories.',
 )]
 class CreateBackupCommand extends Command
 {
@@ -48,8 +48,8 @@ class CreateBackupCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Backup nur simulieren')
-            ->addOption('no-scan', null, InputOption::VALUE_NONE, 'restic-Scan-Phase überspringen')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Only simulate the backup')
+            ->addOption('no-scan', null, InputOption::VALUE_NONE, 'Skip the restic scan phase')
         ;
     }
 
@@ -60,7 +60,7 @@ class CreateBackupCommand extends Command
         $directory = $this->projectDir;
 
         if (!is_dir($directory)) {
-            $io->error(\sprintf('Verzeichnis "%s" existiert nicht.', $directory));
+            $io->error(\sprintf('Directory "%s" does not exist.', $directory));
 
             return Command::FAILURE;
         }
@@ -68,43 +68,43 @@ class CreateBackupCommand extends Command
         $itemsToBackup = $this->resticFactory->getItemsToBackup();
 
         if (empty($itemsToBackup)) {
-            $io->error('Es wurden keine Verzeichnisse, die gesichert werden müssen ausgewählt.');
+            $io->error('No directories to back up have been selected.');
 
             return Command::FAILURE;
         }
 
         $restic = $this->resticFactory->create();
 
-        $io->title('Restic-Backup');
+        $io->title('Restic backup');
 
         foreach ($itemsToBackup as $item) {
             if (!file_exists(Path::join($this->projectDir, $item))) {
-                $io->error(\sprintf('Die Datei oder das Verzeichnis "%s", das gesichert werden soll existiert nicht.', $item));
+                $io->error(\sprintf('The file or directory "%s" that should be backed up does not exist.', $item));
 
                 return Command::FAILURE;
             }
-            $io->writeln('Sichere: '.Path::makeRelative($item, $this->projectDir));
+            $io->writeln('Backing up: '.Path::makeRelative($item, $this->projectDir));
         }
 
         $action = new CreateBackup(
-            $itemsToBackup,
-            $restic->getExcludesFromBackup(),
+            itemsToBackup: $itemsToBackup,
+            excludes: $restic->getExcludesFromBackup(),
             noScan: (bool) $input->getOption('no-scan'),
             dryRun: (bool) $input->getOption('dry-run'),
         );
 
-        $restic->runAction($action, $io); // mit $io -> Fortschrittsbalken
+        $restic->runAction($action, $io); // with $io -> progress bar
 
         $result = $action->getResult();
 
         if (!$result->wasSuccessful()) {
-            $io->error('Backup fehlgeschlagen: '.$result->getOutput());
+            $io->error('Backup failed: '.$result->getOutput());
 
             return Command::FAILURE;
         }
 
-        $result->addSummaryToOutput($io); // Zusammenfassungstabelle
-        $io->success('Backup erstellt. Snapshot: '.$result->getSnapshotId());
+        $result->addSummaryToOutput($io); // summary table
+        $io->success('Backup created. Snapshot: '.$result->getSnapshotId());
 
         return Command::SUCCESS;
     }

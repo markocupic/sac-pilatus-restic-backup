@@ -18,7 +18,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Terminal42\Restic\Restic;
 
-class ResticFactory
+readonly class ResticFactory
 {
     public function __construct(
         private string $baseDirectory,

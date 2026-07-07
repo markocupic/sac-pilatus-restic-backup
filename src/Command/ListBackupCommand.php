@@ -28,7 +28,7 @@ use Terminal42\Restic\Action\ListSnapshots;
  */
 #[AsCommand(
     name: 'sac-pilatus-restic:list',
-    description: 'Listet alle Restic-Snapshots auf (neueste zuerst).',
+    description: 'Lists all restic snapshots (newest first).',
 )]
 class ListBackupCommand extends Command
 {
@@ -45,13 +45,13 @@ class ListBackupCommand extends Command
 
         $restic = $this->resticFactory->create();
 
-        $action = new ListSnapshots(limit: 0); // 0 = alle Snapshots
+        $action = new ListSnapshots(limit: 0); // 0 = all snapshots
         $restic->runAction($action);
 
         $result = $action->getResult();
 
         if (!$result->wasSuccessful()) {
-            $io->error('Snapshots konnten nicht geladen werden: '.$result->getOutput());
+            $io->error('Snapshots could not be loaded: '.$result->getOutput());
 
             return Command::FAILURE;
         }
@@ -59,12 +59,12 @@ class ListBackupCommand extends Command
         $snapshots = $result->getSnapshots();
 
         if ($snapshots->isEmpty()) {
-            $io->warning('Es sind keine Snapshots vorhanden.');
+            $io->warning('There are no snapshots.');
 
             return Command::SUCCESS;
         }
 
-        // Absteigend nach Zeit sortieren (neueste zuerst)
+        // Sort descending by time (newest first)
         $sortedSnapshots = $snapshots->items();
         usort(
             $sortedSnapshots,
@@ -80,9 +80,9 @@ class ListBackupCommand extends Command
             ];
         }
 
-        $io->title('Restic-Snapshots (neueste zuerst)');
-        $io->table(['Snapshot-ID', 'Zeitpunkt'], $rows);
-        $io->text(\sprintf('%d Snapshot(s) gefunden.', \count($sortedSnapshots)));
+        $io->title('Restic snapshots (newest first)');
+        $io->table(['Snapshot ID', 'Time'], $rows);
+        $io->text(\sprintf('%d snapshot(s) found.', \count($sortedSnapshots)));
 
         return Command::SUCCESS;
     }

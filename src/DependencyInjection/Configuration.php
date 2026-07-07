@@ -19,7 +19,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    public const ROOT_KEY = 'markocupic_sac_pilatus_restic_backup';
+    public const string ROOT_KEY = 'markocupic_sac_pilatus_restic_backup';
 
     public function getConfigTreeBuilder(): TreeBuilder
     {
@@ -27,38 +27,38 @@ class Configuration implements ConfigurationInterface
 
         $root = $treeBuilder->getRootNode();
         $root
-            ->info('Benannte Backup-Konfigurationen. Der Schlüssel ist der Name (z. B. "default").')
+            ->info('Named backup configurations. The key is the name (e.g. "default").')
             ->useAttributeAsKey('name')
             ->requiresAtLeastOneElement()
             ->arrayPrototype()
                 ->children()
                     ->scalarNode('base_directory')
-                        ->info('Absoluter Pfad zum Projekt-Wurzelverzeichnis. Basis für restic_directory (Binary/Cache), die restic-CWD und die Auto-Excludes. Im Auto-Modus zugleich das zu sichernde Verzeichnis; bei expliziter Item-Liste in CreateBackup bestimmen die Items, was gesichert wird.')
+                        ->info('Absolute path to the project root directory. Base for restic_directory (binary/cache), the restic CWD and the auto excludes. In auto mode this is also the directory to back up; with an explicit item list in CreateBackup the items determine what is backed up.')
                         ->isRequired()->cannotBeEmpty()
                     ->end()
                     ->arrayNode('items_to_backup')
-                        ->info('Welche Pfade relativ zum base_directory sollen gesichert werden?')
+                        ->info('Which paths relative to base_directory should be backed up?')
                         ->scalarPrototype()->end()
                         ->defaultValue([])
                     ->end()
                     ->scalarNode('repository')
-                        ->info('Restic-DSN: absoluter lokaler Pfad oder s3:...')
+                        ->info('Restic DSN: absolute local path or s3:...')
                         ->isRequired()->cannotBeEmpty()
                     ->end()
                     ->scalarNode('password')
                         ->isRequired()->cannotBeEmpty()
                     ->end()
                     ->scalarNode('restic_directory')
-                        ->info('Unterordner für restic-Binary und -Cache, relativ zum backup_directory.')
+                        ->info('Subdirectory for the restic binary and cache, relative to base_directory.')
                         ->defaultValue('var/restic')
                     ->end()
                     ->arrayNode('excludes')
-                        ->info('Ausschlüsse, relativ zum backup_directory')
+                        ->info('Excludes, relative to base_directory')
                         ->scalarPrototype()->end()
                         ->defaultValue([])
                     ->end()
                     ->arrayNode('env')
-                        ->info('Zusätzliche Restic-Env-Vars, z.B. AWS_ACCESS_KEY_ID')
+                        ->info('Additional restic env vars, e.g. AWS_ACCESS_KEY_ID')
                         ->scalarPrototype()->end()
                     ->defaultValue([])
                     ->end()

@@ -17,8 +17,8 @@ use Terminal42\Restic\Action\AbstractAction;
 use Terminal42\Restic\Action\Result\AbstractActionResult;
 
 /**
- * Entfernt alle Snapshots, die älter als die angegebene Dauer sind (restic --keep-within),
- * und bereinigt anschliessend das Repository (--prune).
+ * Removes all snapshots older than the given duration (restic --keep-within)
+ * and then cleans up the repository (--prune).
  */
 class ForgetSnapshotsWithin extends AbstractAction
 {
@@ -37,8 +37,8 @@ class ForgetSnapshotsWithin extends AbstractAction
     {
         return [
             'forget',
-            '--keep-within', $this->keepWithin, // z. B. "3m" = 3 Monate
-            '--prune', // Daten wirklich entfernen
+            '--keep-within', $this->keepWithin, // e.g. "3m" = 3 months
+            '--prune', // actually remove the data
             '--cleanup-cache',
         ];
     }

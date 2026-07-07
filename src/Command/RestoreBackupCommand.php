@@ -29,7 +29,7 @@ use Terminal42\Restic\Action\RestoreBackup;
 
 #[AsCommand(
     name: 'sac-pilatus-restic:restore',
-    description: 'Stellt einen Snapshot in ein neues Verzeichnis wieder her.',
+    description: 'Restores a snapshot into a new directory.',
 )]
 class RestoreBackupCommand extends Command
 {
@@ -45,64 +45,64 @@ class RestoreBackupCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('target', InputArgument::OPTIONAL, 'Zielverzeichnis als relativer Pfad ab dem Projekt-Root (z. B. var/restore/2026-07-06)')
-            ->addArgument('snapshot', InputArgument::OPTIONAL, 'Snapshot-ID oder "latest". Ohne Angabe wird interaktiv gefragt.')
-            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Restore nur simulieren')
+            ->addArgument('target', InputArgument::OPTIONAL, 'Target directory as a relative path from the project root (e.g. var/restore/2026-07-06)')
+            ->addArgument('snapshot', InputArgument::OPTIONAL, 'Snapshot ID or "latest". If omitted, you are asked interactively.')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Only simulate the restore')
         ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('Restic-Restore');
+        $io->title('Restic restore');
 
-        // 1) Zielpfad (relativ ab Projekt-Root) ermitteln
+        // 1) Determine the target path (relative to the project root)
         $relativeTarget = $input->getArgument('target')
-            ?? $io->ask('Zielverzeichnis (relativer Pfad ab Projekt-Root)');
+            ?? $io->ask('Target directory (relative path from the project root)');
 
         if (null === $relativeTarget || '' === trim($relativeTarget)) {
-            $io->error('Es wurde kein Zielverzeichnis angegeben.');
+            $io->error('No target directory was given.');
 
             return Command::INVALID;
         }
 
-        // Absoluten Pfad bilden und normalisieren
+        // Build and normalize the absolute path
         $targetPath = Path::makeAbsolute($relativeTarget, $this->projectDir);
 
-        // Sicherstellen, dass wir innerhalb des Projekt-Roots bleiben
+        // Make sure we stay inside the project root
         if (!Path::isBasePath($this->projectDir, $targetPath)) {
             $io->error(\sprintf(
-                'Das Zielverzeichnis "%s" liegt ausserhalb des Projekt-Roots.',
+                'The target directory "%s" is outside the project root.',
                 $targetPath,
             ));
 
             return Command::INVALID;
         }
 
-        // 2) Abbrechen, wenn das Ziel bereits existiert (nichts überschreiben)
+        // 2) Abort if the target already exists (do not overwrite anything)
         if (file_exists($targetPath)) {
             $io->error(\sprintf(
-                'Das Zielverzeichnis "%s" existiert bereits. Abbruch, damit nichts überschrieben wird.',
+                'The target directory "%s" already exists. Aborting so nothing gets overwritten.',
                 $targetPath,
             ));
 
             return Command::FAILURE;
         }
 
-        // Restic-Instanz (Projekt-Root als Arbeitsverzeichnis für Binary/Cache)
+        // Restic instance (project root as working directory for binary/cache)
         $restic = $this->resticFactory->create();
 
-        // 3) Vorhandene Snapshots laden und Auswahl anbieten
+        // 3) Load the existing snapshots and offer a selection
         $snapshotId = $input->getArgument('snapshot');
 
         if (null === $snapshotId) {
-            $listAction = new ListSnapshots(limit: 0); // 0 = alle
+            $listAction = new ListSnapshots(limit: 0); // 0 = all
             $restic->runAction($listAction);
 
             $listResult = $listAction->getResult();
 
             if (!$listResult->wasSuccessful()) {
-                $io->error('Snapshots konnten nicht geladen werden: '.$listResult->getOutput());
+                $io->error('Snapshots could not be loaded: '.$listResult->getOutput());
 
                 return Command::FAILURE;
             }
@@ -110,20 +110,20 @@ class RestoreBackupCommand extends Command
             $snapshots = $listResult->getSnapshots();
 
             if ($snapshots->isEmpty()) {
-                $io->error('Es sind keine Snapshots vorhanden.');
+                $io->error('There are no snapshots.');
 
                 return Command::FAILURE;
             }
 
-            // Snapshots absteigend nach Zeit sortieren (neueste zuerst)
+            // Sort snapshots descending by time (newest first)
             $sortedSnapshots = $snapshots->items();
             usort(
                 $sortedSnapshots,
                 static fn ($a, $b): int => $b->getTime() <=> $a->getTime(),
             );
 
-            // Auswahlliste mit Datum/Zeit aufbauen; Label -> Snapshot-ID merken
-            $latestLabel = 'Neuester Snapshot (latest)';
+            // Build the choice list with date/time; remember label -> snapshot ID
+            $latestLabel = 'Latest snapshot (latest)';
             $choiceList = [$latestLabel];
             $labelToId = [$latestLabel => 'latest'];
 
@@ -139,7 +139,7 @@ class RestoreBackupCommand extends Command
             }
 
             $chosenLabel = $io->choice(
-                'Welchen Snapshot möchtest du wiederherstellen?',
+                'Which snapshot would you like to restore?',
                 $choiceList,
                 $latestLabel,
             );
@@ -151,17 +151,17 @@ class RestoreBackupCommand extends Command
 
         $io->text([
             'Snapshot: '.$snapshotId,
-            'Ziel:     '.$targetPath,
-            'Modus:    '.($dryRun ? 'DRY-RUN (Simulation)' : 'echtes Restore'),
+            'Target:   '.$targetPath,
+            'Mode:     '.($dryRun ? 'DRY-RUN (simulation)' : 'real restore'),
         ]);
 
-        if (!$io->confirm('Restore jetzt starten?', false)) {
-            $io->warning('Abgebrochen.');
+        if (!$io->confirm('Start the restore now?', false)) {
+            $io->warning('Aborted.');
 
             return Command::SUCCESS;
         }
 
-        // 4) Restore ausführen
+        // 4) Run the restore
         $action = new RestoreBackup(
             snapshotId: $snapshotId,
             targetPath: $targetPath,
@@ -173,16 +173,16 @@ class RestoreBackupCommand extends Command
         $result = $action->getResult();
 
         if (!$result->wasSuccessful()) {
-            $io->error('Restore fehlgeschlagen: '.$result->getOutput());
+            $io->error('Restore failed: '.$result->getOutput());
 
             return Command::FAILURE;
         }
 
-        // Summary robust aus dem NDJSON-Stream lesen (nicht über die Library-Getter)
+        // Read the summary robustly from the NDJSON stream (not via the library getters)
         $summary = $this->extractSummary($result->getOutput());
 
         $io->success(\sprintf(
-            'Restore abgeschlossen: %d Datei(en), %d Bytes wiederhergestellt nach "%s".',
+            'Restore finished: %d file(s), %d bytes restored to "%s".',
             (int) ($summary['files_restored'] ?? 0),
             (int) ($summary['total_bytes'] ?? 0),
             $targetPath,
@@ -192,8 +192,8 @@ class RestoreBackupCommand extends Command
     }
 
     /**
-     * restic restore --json liefert mehrere JSON-Zeilen (NDJSON).
-     * Wir suchen die letzte gültige "summary"-Zeile.
+     * Restic restore --json returns multiple JSON lines (NDJSON).
+     * We look for the last valid "summary" line.
      */
     private function extractSummary(string $output): array
     {

@@ -23,27 +23,27 @@ use Symfony\Component\Filesystem\Path;
 use Terminal42\Restic\Action\CreateBackup;
 
 #[AsCronJob('hourly')]
-class CreateBackupCron
+readonly class CreateBackupCron
 {
     public function __construct(
         #[Autowire(service: 'markocupic_sac_pilatus_restic_backup.factory.default')]
-        private readonly ResticFactory $resticFactory,
+        private ResticFactory $resticFactory,
         #[Autowire(param: 'kernel.project_dir')]
-        private readonly string $projectDir,
-        private readonly LoggerInterface|null $contaoGeneralLogger = null,
-        private readonly LoggerInterface|null $contaoErrorLogger = null,
+        private string $projectDir,
+        private LoggerInterface|null $contaoGeneralLogger = null,
+        private LoggerInterface|null $contaoErrorLogger = null,
     ) {
     }
 
     public function __invoke(string $scope): void
     {
-        // Backup ist rechenintensiv -> nur im CLI-Scope (Server-Cron), nie im Web-Request.
+        // Backups are resource-intensive -> only in the CLI scope (server cron), never in a web request.
         if (Cron::SCOPE_CLI !== $scope) {
             return;
         }
 
         if (!is_dir($this->projectDir)) {
-            $this->contaoErrorLogger?->error(\sprintf('[Restic] Verzeichnis "%s" existiert nicht. CreateBackupCron konnte nicht ausgeführt werden.', $this->projectDir));
+            $this->contaoErrorLogger?->error(\sprintf('[Restic] Directory "%s" does not exist. CreateBackupCron could not be executed.', $this->projectDir));
 
             return;
         }
@@ -51,7 +51,7 @@ class CreateBackupCron
         $itemsToBackup = $this->resticFactory->getItemsToBackup();
 
         if (empty($itemsToBackup)) {
-            $this->contaoErrorLogger?->error('Es wurden keine Verzeichnisse, die gesichert werden müssen ausgewählt.');
+            $this->contaoErrorLogger?->error('No directories to back up have been selected.');
 
             return;
         }
@@ -60,13 +60,13 @@ class CreateBackupCron
 
         foreach ($itemsToBackup as $item) {
             if (!file_exists(Path::join($this->projectDir, $item))) {
-                $this->contaoErrorLogger?->error(\sprintf('Die Datei oder das Verzeichnis "%s", das gesichert werden soll existiert nicht.', $item));
+                $this->contaoErrorLogger?->error(\sprintf('The file or directory "%s" that should be backed up does not exist.', $item));
                 $hasError = true;
             }
         }
 
         if ($hasError) {
-            $this->contaoErrorLogger?->error('CreateBackupCron konnte nicht ausgeführt werden');
+            $this->contaoErrorLogger?->error('CreateBackupCron could not be executed');
 
             return;
         }
@@ -80,16 +80,16 @@ class CreateBackupCron
             dryRun: false,
         );
 
-        $restic->runAction($action); // ohne $io -> kein Progress-Output
+        $restic->runAction($action); // without $io -> no progress output
 
         $result = $action->getResult();
 
         if (!$result->wasSuccessful()) {
-            $this->contaoErrorLogger?->error('[Restic] File-Backup fehlgeschlagen: '.$result->getOutput());
+            $this->contaoErrorLogger?->error('[Restic] File backup failed: '.$result->getOutput());
 
             return;
         }
 
-        $this->contaoGeneralLogger?->info('[Restic] File-Backup erstellt. Snapshot: '.$result->getSnapshotId());
+        $this->contaoGeneralLogger?->info('[Restic] File backup created. Snapshot: '.$result->getSnapshotId());
     }
 }
