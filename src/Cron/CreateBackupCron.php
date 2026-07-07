@@ -22,7 +22,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Path;
 use Terminal42\Restic\Action\CreateBackup;
 
-#[AsCronJob('hourly')]
+#[AsCronJob('5 * * * *')]
 readonly class CreateBackupCron
 {
     public function __construct(
