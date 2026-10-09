@@ -67,5 +67,6 @@
         "cs-fixer": "@php tools/ecs/vendor/bin/ecs check --config tools/ecs/config/default.php --fix --ansi",
         "cs-check": "@php tools/ecs/vendor/bin/ecs check --config tools/ecs/config/default.php --ansi",
         "unit-tests": "@php vendor/bin/phpunit --colors=always"
-    }
+    },
+    "version": "1.0"
 }
