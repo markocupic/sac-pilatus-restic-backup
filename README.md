@@ -13,7 +13,7 @@ installation is required.
 ## Requirements
 
 - PHP ≥ 8.2 with the `ext-zip` and `ext-bz2` extensions
-- Contao ≥ 5.3
+- Contao 5.3 or Contao 6
 - Write permissions in the `base_directory` and internet access to `github.com/restic/restic/releases` on the first run
 
 ## Installation
@@ -122,8 +122,8 @@ already exists, the command aborts** – nothing is ever overwritten.
 Both cron jobs run exclusively in the **CLI scope** (so resource-intensive operations never block a
 visitor request) and use the `default` configuration. Results are written to the Contao logger.
 
-- **`CreateBackupCron`** (`#[AsCronJob('hourly')]`) – creates an hourly backup of the configured
-  `items_to_backup`.
+- **`CreateBackupCron`** (`#[AsCronJob('5 * * * *')]`) – creates an hourly backup (at minute 5) of the
+  configured `items_to_backup`.
 - **`PruneOldSnapshotsCron`** (`#[AsCronJob('daily')]`) – removes all snapshots older than **3 months**
   every day and cleans up the repository (`restic forget --keep-within 3m --prune`). It uses the custom
   action `ForgetSnapshotsWithin`.

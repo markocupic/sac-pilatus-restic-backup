@@ -19,7 +19,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    public const string ROOT_KEY = 'markocupic_sac_pilatus_restic_backup';
+    public const ROOT_KEY = 'markocupic_sac_pilatus_restic_backup';
 
     public function getConfigTreeBuilder(): TreeBuilder
     {
