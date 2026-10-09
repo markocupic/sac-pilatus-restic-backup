@@ -1,4 +1,3 @@
-# config/services.yaml
 services:
     _defaults:
         autowire: true
@@ -8,6 +7,8 @@ services:
     Markocupic\SacPilatusResticBackup\:
         resource: ../src/
         exclude:
-            - '../src/Backup/ResticFactory.php'
-            - '../src/DependencyInjection/'
-
+            - ../src/Backup/ResticFactory.php
+            - ../src/ContaoManager
+            - ../src/DependencyInjection
+            - ../src/Restic
+            - ../src/MarkocupicSacPilatusResticBackup.php
