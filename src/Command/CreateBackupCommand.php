@@ -57,6 +57,12 @@ class CreateBackupCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
+        if (!$this->resticFactory->isEnabled()) {
+            $io->warning('Backups are disabled (option "enable: false"). No backup has been created.');
+
+            return Command::SUCCESS;
+        }
+
         $directory = $this->projectDir;
 
         if (!is_dir($directory)) {

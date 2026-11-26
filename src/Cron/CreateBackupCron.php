@@ -42,6 +42,11 @@ readonly class CreateBackupCron
             return;
         }
 
+        // Backups have been disabled in the configuration (option "enable: false").
+        if (!$this->resticFactory->isEnabled()) {
+            return;
+        }
+
         if (!is_dir($this->projectDir)) {
             $this->contaoErrorLogger?->error(\sprintf('[Restic] Directory "%s" does not exist. CreateBackupCron could not be executed.', $this->projectDir));
 
