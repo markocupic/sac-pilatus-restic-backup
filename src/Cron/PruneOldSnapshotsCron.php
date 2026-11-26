@@ -38,6 +38,11 @@ readonly class PruneOldSnapshotsCron
             return;
         }
 
+        // Backups have been disabled in the configuration (option "enable: false").
+        if (!$this->resticFactory->isEnabled()) {
+            return;
+        }
+
         $restic = $this->resticFactory->create();
 
         // Keep everything younger than 3 months old; older snapshots are removed.

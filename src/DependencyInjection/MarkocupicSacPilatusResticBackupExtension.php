@@ -56,6 +56,7 @@ class MarkocupicSacPilatusResticBackupExtension extends Extension
                 '$excludes' => $backup['excludes'],
                 '$env' => $backup['env'],
                 '$resticDirectory' => $backup['restic_directory'],
+                '$enabled' => $backup['enable'],
                 '$logger' => new Reference(
                     'logger',
                     ContainerInterface::NULL_ON_INVALID_REFERENCE, // = ->nullOnInvalid()

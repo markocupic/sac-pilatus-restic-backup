@@ -35,6 +35,7 @@ Configuration is done under the key `markocupic_sac_pilatus_restic_backup`. Each
 markocupic_sac_pilatus_restic_backup:
 
     default:
+        enable: true                                     # optional: false disables the backups completely
         base_directory: '%kernel.project_dir%'          # required: project root directory (absolute)
         items_to_backup:                                 # paths to back up, relative to base_directory
             - 'files/fileadmin'
@@ -64,6 +65,7 @@ Fields per configuration:
 
 | Option             | Required | Default      | Description                                                                 |
 |--------------------|:--------:|--------------|-----------------------------------------------------------------------------|
+| `enable`           |    no    | `true`       | `false` disables the backups: cron jobs and the backup command do nothing.  |
 | `base_directory`   | **yes**  | –            | Project root directory. Base for `restic_directory`, CWD and auto excludes. |
 | `items_to_backup`  |    no    | `[]`         | Paths to back up, relative to `base_directory`.                             |
 | `repository`       | **yes**  | –            | Restic DSN: absolute local path **or** `s3:…`.                              |
@@ -75,6 +77,23 @@ Fields per configuration:
 Notes: Local repositories require an **absolute** path. For S3, `AWS_ACCESS_KEY_ID` and
 `AWS_SECRET_ACCESS_KEY` must be set in the `env` array. The `restic_directory` is excluded from backups
 automatically. Ideally choose a different storage device for the repository than the project itself.
+
+### Disabling the backups
+
+Set `enable: false` to switch the backups off completely, e.g. on a development or staging installation:
+
+```yaml
+# config/config.yaml
+markocupic_sac_pilatus_restic_backup:
+    default:
+        enable: false
+        # …
+```
+
+Both cron jobs (`CreateBackupCron`, `PruneOldSnapshotsCron`) then return immediately and
+`sac-pilatus-restic:backup` prints a warning without creating a snapshot. No restic binary is downloaded
+and the repository is not touched. `sac-pilatus-restic:list` and `sac-pilatus-restic:restore` keep working,
+so existing snapshots can still be inspected and restored. The other options stay required.
 
 For each configuration the bundle registers a dedicated factory service with the ID
 `markocupic_sac_pilatus_restic_backup.factory.<name>` (e.g. `markocupic_sac_pilatus_restic_backup.factory.default`).

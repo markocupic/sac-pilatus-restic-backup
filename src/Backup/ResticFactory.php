@@ -29,7 +29,16 @@ readonly class ResticFactory
         #[\SensitiveParameter] private array $env = [],
         private string $resticDirectory = 'var/restic',
         private LoggerInterface|null $logger = null,
+        private bool $enabled = true,
     ) {
+    }
+
+    /**
+     * False if the backups of this configuration have been disabled (option "enable: false").
+     */
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
     }
 
     public function create(): Restic

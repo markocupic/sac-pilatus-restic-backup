@@ -53,6 +53,41 @@ class MarkocupicSacPilatusResticBackupExtensionTest extends TestCase
         $this->assertSame('var/restic', $definition->getArgument('$resticDirectory'));
     }
 
+    public function testBackupsAreEnabledByDefault(): void
+    {
+        $container = new ContainerBuilder();
+
+        (new MarkocupicSacPilatusResticBackupExtension())->load([[
+            'default' => [
+                'base_directory' => '/var/www/project',
+                'repository' => '/var/backups/restic',
+                'password' => 'secret',
+            ],
+        ]], $container);
+
+        $definition = $container->getDefinition('markocupic_sac_pilatus_restic_backup.factory.default');
+
+        $this->assertTrue($definition->getArgument('$enabled'));
+    }
+
+    public function testBackupsCanBeDisabled(): void
+    {
+        $container = new ContainerBuilder();
+
+        (new MarkocupicSacPilatusResticBackupExtension())->load([[
+            'default' => [
+                'enable' => false,
+                'base_directory' => '/var/www/project',
+                'repository' => '/var/backups/restic',
+                'password' => 'secret',
+            ],
+        ]], $container);
+
+        $definition = $container->getDefinition('markocupic_sac_pilatus_restic_backup.factory.default');
+
+        $this->assertFalse($definition->getArgument('$enabled'));
+    }
+
     public function testFailsWithoutDefaultConfiguration(): void
     {
         $this->expectException(\Exception::class);
